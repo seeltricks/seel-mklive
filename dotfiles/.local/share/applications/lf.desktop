@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Terminal=false
+Exec=foot -a lf -e lf
+Name=lf
+GenericName=File manager
+Comment=Launches the lf file manager
+Icon=system-file-manager
+Keywords=ConsoleOnly;System;FileTools;FileManager
+MimeType=inode/directory;
+Categories=ConsoleOnly;System;FileTools;FileManager
