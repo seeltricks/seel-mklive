@@ -62,8 +62,7 @@ setup_pipewire() {
 }
 
 build_variant() {
-    variant="$1"
-    shift
+    variant="seel"
     IMG=void-live-${ARCH}-${DATE}-${variant}.iso
     GRUB_PKGS="grub-i386-efi grub-x86_64-efi"
     A11Y_PKGS="espeakup void-live-audio brltty"
@@ -100,3 +99,5 @@ else
     echo installer.sh not found >&2
     exit 1
 fi
+
+build_variant
