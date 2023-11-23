@@ -679,42 +679,13 @@ set_rootpassword() {
 menu_useraccount() {
     local _firstpass _secondpass _desc _again
     local _groups _status _group _checklist
-    local _preset _userlogin
 
-    while true; do
-        _preset=$(get_option USERLOGIN)
-        [ -z "$_preset" ] && _preset="void"
-        DIALOG --inputbox "Enter a primary login name:" ${INPUTSIZE} "$_preset"
-        if [ $? -eq 0 ]; then
-            _userlogin="$(cat $ANSWER)"
-            # based on useradd(8) § Caveats
-            if [ "${#_userlogin}" -le 32 ] && [[ "${_userlogin}" =~ ^[a-z_][a-z0-9_-]*[$]?$ ]]; then
-                set_option USERLOGIN "${_userlogin}"
-                USERLOGIN_DONE=1
-                break
-            else
-                INFOBOX "Invalid login name! Please try again." 6 60
-                unset _userlogin
-                sleep 2 && clear && continue
-            fi
-        else
-            return
-        fi
-    done
+    # Hardcode login name for user
+    set_option USERLOGIN "void"
+    USERLOGIN_DONE=1
 
-    while true; do
-        _preset=$(get_option USERNAME)
-        [ -z "$_preset" ] && _preset="Void User"
-        DIALOG --inputbox "Enter a display name for login '$(get_option USERLOGIN)' :" \
-            ${INPUTSIZE} "$_preset"
-        if [ $? -eq 0 ]; then
-            set_option USERNAME "$(cat $ANSWER)"
-            USERNAME_DONE=1
-            break
-        else
-            return
-        fi
-    done
+    set_option USERNAME "void"
+    USERNAME_DONE=1
 
     while true; do
         if [ -z "${_firstpass}" ]; then
