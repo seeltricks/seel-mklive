@@ -20,12 +20,7 @@ usage() {
 
 	OPTIONS
 	 -a <arch>     Set XBPS_ARCH in the image
-	 -b <variant>  One of base, enlightenment, xfce, mate, cinnamon, gnome, kde,
-	               lxde, or lxqt (default: base). May be specified multiple times
-	               to build multiple variants
 	 -d <date>     Override the datestamp on the generated image (YYYYMMDD format)
-	 -t <arch-date-variant>
-	               Equivalent to setting -a, -b, and -d
 	 -r <repo>     Use this XBPS repository. May be specified multiple times
 	 -h            Show this help and exit
 	 -V            Show version and exit
@@ -35,13 +30,11 @@ usage() {
 	EOH
 }
 
-while getopts "a:b:d:t:hr:V" opt; do
+while getopts "a:d:hr:V" opt; do
 case $opt in
     a) ARCH="$OPTARG";;
-    b) IMAGES="$OPTARG";;
     d) DATE="$OPTARG";;
     r) REPO="-r $OPTARG $REPO";;
-    t) TRIPLET="$OPTARG";;
     V) version; exit 0;;
     h) usage; exit 0;;
     *) usage >&2; exit 1;;
@@ -75,71 +68,18 @@ build_variant() {
     GRUB_PKGS="grub-i386-efi grub-x86_64-efi"
     A11Y_PKGS="espeakup void-live-audio brltty"
     PKGS="dialog cryptsetup lvm2 mdadm void-docs-browse xtools-minimal xmirror chrony $A11Y_PKGS $GRUB_PKGS"
-    XORG_PKGS="xorg-minimal xorg-input-drivers xorg-video-drivers setxkbmap xauth font-misc-misc terminus-font dejavu-fonts-ttf orca"
+    #XORG_PKGS="xorg-minimal xorg-input-drivers xorg-video-drivers setxkbmap xauth font-misc-misc terminus-font dejavu-fonts-ttf orca"
+    # TODO: Add necessary packages for wayland
+    WAYLAND_PKGS=""
     SERVICES="sshd chronyd"
 
-    LIGHTDM_SESSION=''
+    # Extra complimentary packages and services to enable per my config
+    PKGS=""
+    SERVICES=""
 
-    case $variant in
-        base)
-            SERVICES="$SERVICES dhcpcd wpa_supplicant acpid"
-        ;;
-        enlightenment)
-            PKGS="$PKGS $XORG_PKGS lightdm lightdm-gtk3-greeter enlightenment terminology udisks2 firefox"
-            SERVICES="$SERVICES acpid dhcpcd wpa_supplicant lightdm dbus polkitd"
-            LIGHTDM_SESSION=enlightenment
-        ;;
-        xfce)
-            PKGS="$PKGS $XORG_PKGS lightdm lightdm-gtk3-greeter xfce4 gnome-themes-standard gnome-keyring network-manager-applet gvfs-afc gvfs-mtp gvfs-smb udisks2 firefox xfce4-pulseaudio-plugin"
-            SERVICES="$SERVICES dbus elogind lightdm NetworkManager polkitd"
-            LIGHTDM_SESSION=xfce
-        ;;
-        mate)
-            PKGS="$PKGS $XORG_PKGS lightdm lightdm-gtk3-greeter mate mate-extra gnome-keyring network-manager-applet gvfs-afc gvfs-mtp gvfs-smb udisks2 firefox"
-            SERVICES="$SERVICES dbus elogind lightdm NetworkManager polkitd"
-            LIGHTDM_SESSION=mate
-        ;;
-        cinnamon)
-            PKGS="$PKGS $XORG_PKGS lightdm lightdm-gtk3-greeter cinnamon gnome-keyring colord gnome-terminal gvfs-afc gvfs-mtp gvfs-smb udisks2 firefox"
-            SERVICES="$SERVICES dbus elogind lightdm NetworkManager polkitd"
-            LIGHTDM_SESSION=cinnamon
-        ;;
-        gnome)
-            PKGS="$PKGS $XORG_PKGS gnome firefox"
-            SERVICES="$SERVICES dbus elogind gdm NetworkManager polkitd"
-        ;;
-        kde)
-            PKGS="$PKGS $XORG_PKGS kde5 konsole firefox dolphin"
-            SERVICES="$SERVICES dbus elogind NetworkManager sddm"
-        ;;
-        lxde)
-            PKGS="$PKGS $XORG_PKGS lxde lightdm lightdm-gtk3-greeter gvfs-afc gvfs-mtp gvfs-smb udisks2 firefox"
-            SERVICES="$SERVICES acpid dbus dhcpcd wpa_supplicant lightdm polkitd"
-            LIGHTDM_SESSION=LXDE
-        ;;
-        lxqt)
-            PKGS="$PKGS $XORG_PKGS lxqt sddm gvfs-afc gvfs-mtp gvfs-smb udisks2 firefox"
-            SERVICES="$SERVICES elogind dbus dhcpcd wpa_supplicant sddm polkitd"
-        ;;
-        *)
-            >&2 echo "Unknown variant $variant"
-            exit 1
-        ;;
-    esac
+    # TODO: Include my config in the ISO into $INCLUDEDIR, deal with user dir shenanigans
 
-    if [ -n "$LIGHTDM_SESSION" ]; then
-        mkdir -p "$INCLUDEDIR"/etc/lightdm
-        echo "$LIGHTDM_SESSION" > "$INCLUDEDIR"/etc/lightdm/.session
-        # needed to show the keyboard layout menu on the login screen
-        cat <<- EOF > "$INCLUDEDIR"/etc/lightdm/lightdm-gtk-greeter.conf
-[greeter]
-indicators = ~host;~spacer;~clock;~spacer;~layout;~session;~a11y;~power
-EOF
-    fi
-
-    if [ "$variant" != base ]; then
-        setup_pipewire
-    fi
+    setup_pipewire
 
     ./mklive.sh -a "$ARCH" -o "$IMG" -p "$PKGS" -S "$SERVICES" -I "$INCLUDEDIR" ${REPO} "$@"
 
@@ -160,16 +100,4 @@ if [ -x installer.sh ]; then
 else
     echo installer.sh not found >&2
     exit 1
-fi
-
-if [ -n "$TRIPLET" ]; then
-    VARIANT="${TRIPLET##*-}"
-    REST="${TRIPLET%-*}"
-    DATE="${REST##*-}"
-    ARCH="${REST%-*}"
-    build_variant "$VARIANT" "$@"
-else
-    for image in $IMAGES; do
-        build_variant "$image" "$@"
-    done
 fi
