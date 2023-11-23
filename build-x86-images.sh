@@ -68,16 +68,15 @@ build_variant() {
     GRUB_PKGS="grub-i386-efi grub-x86_64-efi"
     A11Y_PKGS="espeakup void-live-audio brltty"
     PKGS="dialog cryptsetup lvm2 mdadm void-docs-browse xtools-minimal xmirror chrony $A11Y_PKGS $GRUB_PKGS"
-    #XORG_PKGS="xorg-minimal xorg-input-drivers xorg-video-drivers setxkbmap xauth font-misc-misc terminus-font dejavu-fonts-ttf orca"
-    # TODO: Add necessary packages for wayland
-    WAYLAND_PKGS=""
     SERVICES="sshd chronyd"
 
     # Extra complimentary packages and services to enable per my config
-    PKGS=""
-    SERVICES=""
+    PKGS="$PKGS btop dunst foot fuzzel imv lf mpv neovim qtile zathura wlr-randr swaylock grim slurp swayidle firefox"
+    SERVICES="$SERVICES"
 
-    # TODO: Include my config in the ISO into $INCLUDEDIR, deal with user dir shenanigans
+    # TODO: Include a config in the ISO
+    mkdir -p "$INCLUDEDIR"/home/void/
+    cp -R dotfiles "$INCLUDEDIR"/home/void
 
     setup_pipewire
 
